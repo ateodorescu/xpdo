@@ -19,7 +19,7 @@
         "ext-PDO": "*",
         "ext-json": "*",
         "ext-simplexml": "*",
-        "symfony/console": "^5.4",
+        "symfony/console": ">5.4",
         "psr/container": "^1.1 || ^2.0.1"
     },
     "require-dev": {
