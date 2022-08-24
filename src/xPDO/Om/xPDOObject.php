@@ -223,6 +223,7 @@ class xPDOObject {
             if (!$criteria->stmt->execute()) {
                 $xpdo->queryTime += microtime(true) - $tstart;
                 $xpdo->executedQueries++;
+                $xpdo->failedQueries[] = $criteria->stmt->queryString;
                 $errorInfo= $criteria->stmt->errorInfo();
                 $xpdo->log(xPDO::LOG_LEVEL_ERROR, 'Error ' . $criteria->stmt->errorCode() . " executing statement: \n" . print_r($errorInfo, true));
                 if (($errorInfo[1] == '1146' || $errorInfo[1] == '1') && $xpdo->getOption(xPDO::OPT_AUTO_CREATE_TABLES)) {
@@ -231,10 +232,12 @@ class xPDOObject {
                         if (!$criteria->stmt->execute()) {
                             $xpdo->queryTime += microtime(true) - $tstart;
                             $xpdo->executedQueries++;
+                            $xpdo->failedQueries[] = $criteria->stmt->queryString;
                             $xpdo->log(xPDO::LOG_LEVEL_ERROR, "Error " . $criteria->stmt->errorCode() . " executing statement: \n" . print_r($criteria->stmt->errorInfo(), true));
                         } else {
                             $xpdo->queryTime += microtime(true) - $tstart;
                             $xpdo->executedQueries++;
+                            $xpdo->successfulQueries[] = $criteria->stmt->queryString;
                         }
                     } else {
                         $xpdo->log(xPDO::LOG_LEVEL_ERROR, "Error " . $xpdo->errorCode() . " attempting to create object container for class {$className}:\n" . print_r($xpdo->errorInfo(), true));
@@ -243,6 +246,7 @@ class xPDOObject {
             } else {
                 $xpdo->queryTime += microtime(true) - $tstart;
                 $xpdo->executedQueries++;
+                $xpdo->successfulQueries[] = $criteria->stmt->queryString;
             }
             $rows= & $criteria->stmt;
         } else {
@@ -257,10 +261,12 @@ class xPDOObject {
                         if (!$criteria->stmt->execute()) {
                             $xpdo->queryTime += microtime(true) - $tstart;
                             $xpdo->executedQueries++;
+                            $xpdo->failedQueries[] = $criteria->stmt->queryString;
                             $xpdo->log(xPDO::LOG_LEVEL_ERROR, "Error " . $criteria->stmt->errorCode() . " executing statement: \n" . print_r($criteria->stmt->errorInfo(), true));
                         } else {
                             $xpdo->queryTime += microtime(true) - $tstart;
                             $xpdo->executedQueries++;
+                            $xpdo->successfulQueries[] = $criteria->stmt->queryString;
                         }
                     }
                 } else {
@@ -522,10 +528,12 @@ class xPDOObject {
                     if ($query->stmt->execute()) {
                         $xpdo->queryTime += microtime(true) - $tstart;
                         $xpdo->executedQueries++;
+                        $xpdo->successfulQueries[] = $query->stmt->queryString;
                         $objCollection= $query->hydrateGraph($query->stmt, $cacheFlag);
                     } else {
                         $xpdo->queryTime += microtime(true) - $tstart;
                         $xpdo->executedQueries++;
+                        $xpdo->failedQueries[] = $query->stmt->queryString;
                         $xpdo->log(xPDO::LOG_LEVEL_ERROR, "Error {$query->stmt->errorCode()} executing query: {$query->sql} - " . print_r($query->stmt->errorInfo(), true));
                     }
                 } else {
@@ -1439,6 +1447,7 @@ class xPDOObject {
                     if (!$result= $criteria->stmt->execute()) {
                         $this->xpdo->queryTime += microtime(true) - $tstart;
                         $this->xpdo->executedQueries++;
+                        $this->xpdo->failedQueries[] = $criteria->stmt->queryString;
                         $errorInfo= $criteria->stmt->errorInfo();
                         $this->xpdo->log(xPDO::LOG_LEVEL_ERROR, "Error " . $criteria->stmt->errorCode() . " executing statement:\n" . $criteria->toSQL() . "\n" . print_r($errorInfo, true));
                         if (($errorInfo[1] == '1146' || $errorInfo[1] == '1') && $this->getOption(xPDO::OPT_AUTO_CREATE_TABLES)) {
@@ -1447,10 +1456,12 @@ class xPDOObject {
                                 if (!$result= $criteria->stmt->execute()) {
                                     $this->xpdo->queryTime += microtime(true) - $tstart;
                                     $this->xpdo->executedQueries++;
+                                    $this->xpdo->failedQueries[] = $criteria->stmt->queryString;
                                     $this->xpdo->log(xPDO::LOG_LEVEL_ERROR, "Error " . $criteria->stmt->errorCode() . " executing statement:\n{$sql}\n");
                                 } else {
                                     $this->xpdo->queryTime += microtime(true) - $tstart;
                                     $this->xpdo->executedQueries++;
+                                    $this->xpdo->successfulQueries[] = $criteria->stmt->queryString;
                                 }
                             } else {
                                 $this->xpdo->log(xPDO::LOG_LEVEL_ERROR, "Error " . $this->xpdo->errorCode() . " attempting to create object container for class {$this->_class}:\n" . print_r($this->xpdo->errorInfo(), true));
@@ -1459,6 +1470,7 @@ class xPDOObject {
                     } else {
                         $this->xpdo->queryTime += microtime(true) - $tstart;
                         $this->xpdo->executedQueries++;
+                        $this->xpdo->successfulQueries[] = $criteria->stmt->queryString;
                     }
                 } else {
                     $result= false;
@@ -1688,10 +1700,12 @@ class xPDOObject {
                 if (!$result= $stmt->execute()) {
                     $this->xpdo->queryTime += microtime(true) - $tstart;
                     $this->xpdo->executedQueries++;
+                    $this->xpdo->failedQueries[] = $stmt->queryString;
                     $this->xpdo->log(xPDO::LOG_LEVEL_ERROR, 'Could not delete from ' . $this->_table . '; primary key specified was ' . print_r($pk, true) . "\n" . print_r($stmt->errorInfo(), true));
                 } else {
                     $this->xpdo->queryTime += microtime(true) - $tstart;
                     $this->xpdo->executedQueries++;
+                    $this->xpdo->successfulQueries[] = $stmt->queryString;
                     $callback = $this->getOption(xPDO::OPT_CALLBACK_ON_REMOVE);
                     if ($callback && is_callable($callback)) {
                         call_user_func($callback, array('className' => $this->_class, 'criteria' => $delete, 'object' => $this));

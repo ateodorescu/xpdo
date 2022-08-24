@@ -93,9 +93,16 @@ class xPDOGenerator extends \xPDO\Om\xPDOGenerator {
         }
 
         $tstart = microtime(true);
-        $tablesStmt->execute();
+        $return = $tablesStmt->execute();
         $this->manager->xpdo->queryTime += microtime(true) - $tstart;
         $this->manager->xpdo->executedQueries++;
+
+        if ($return) {
+            $this->manager->xpdo->successfulQueries[] = $tablesStmt->queryString;
+        } else {
+            $this->manager->xpdo->failedQueries[] = $tablesStmt->queryString;
+        }
+
         $tables= $tablesStmt->fetchAll(PDO::FETCH_NUM);
         if ($this->manager->xpdo->getDebug() === true) $this->manager->xpdo->log(xPDO::LOG_LEVEL_DEBUG, print_r($tables, true));
         foreach ($tables as $table) {

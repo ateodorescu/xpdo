@@ -164,6 +164,14 @@ class xPDO {
      */
     public $executedQueries= 0;
     /**
+     * @var array The list of all successful queries executed during a request.
+     */
+    public $successfulQueries = array();
+    /**
+     * @var array The list of failed queries executed during a request.
+     */
+    public $failedQueries = array();
+    /**
      * @var int The amount of request handling time spent with DB queries.
      */
     public $queryTime= 0;
@@ -1100,11 +1108,13 @@ class xPDO {
             if ($stmt->execute()) {
                 $this->queryTime += microtime(true) - $tstart;
                 $this->executedQueries++;
+                $this->successfulQueries[] = $stmt->queryString;
                 $value= $stmt->fetchColumn((int)$column);
                 $stmt->closeCursor();
             } else {
                 $this->queryTime += microtime(true) - $tstart;
                 $this->executedQueries++;
+                $this->failedQueries[] = $stmt->queryString;
                 $this->log(xPDO::LOG_LEVEL_ERROR, "Error " . $stmt->errorCode() . " executing statement: \n" . print_r($stmt->errorInfo(), true), '', __METHOD__, __FILE__, __LINE__);
             }
         } else {
@@ -2485,6 +2495,11 @@ class xPDO {
         $return= $this->pdo->exec($query);
         $this->queryTime += microtime(true) - $tstart;
         $this->executedQueries++;
+        if ($return) {
+            $this->successfulQueries[] = $query;
+        } else {
+            $this->failedQueries[] = $query;
+        }
         return $return;
     }
 
@@ -2549,6 +2564,11 @@ class xPDO {
         $return= $this->pdo->query($query);
         $this->queryTime += microtime(true) - $tstart;
         $this->executedQueries++;
+        if ($return) {
+            $this->successfulQueries[] = $query;
+        } else {
+            $this->failedQueries[] = $query;
+        }
         return $return;
     }
 

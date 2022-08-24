@@ -426,10 +426,12 @@ class xPDOManager extends \xPDO\Om\xPDOManager {
         if ($stmt && $stmt->execute(array($table, $table, $name))) {
             $this->xpdo->queryTime += microtime(true) - $tstart;
             $this->xpdo->executedQueries++;
+            $this->xpdo->successfulQueries[] = $stmt->queryString;
             $constraints = $stmt->fetchAll(\PDO::FETCH_COLUMN);
         } elseif ($stmt) {
             $this->xpdo->queryTime += microtime(true) - $tstart;
             $this->xpdo->executedQueries++;
+            $this->xpdo->failedQueries[] = $stmt->queryString;
         }
         return $constraints;
     }

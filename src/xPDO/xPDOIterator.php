@@ -89,10 +89,12 @@ class xPDOIterator implements Iterator
         if ($this->stmt && $this->stmt->execute()) {
             $this->xpdo->queryTime += microtime(true) - $tstart;
             $this->xpdo->executedQueries++;
+            $this->xpdo->successfulQueries[] = $this->stmt->queryString;
             $this->fetch();
         } elseif ($this->stmt) {
             $this->xpdo->queryTime += microtime(true) - $tstart;
             $this->xpdo->executedQueries++;
+            $this->xpdo->failedQueries[] = $this->stmt->queryString;
         }
     }
 
