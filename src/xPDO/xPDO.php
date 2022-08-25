@@ -1110,11 +1110,11 @@ class xPDO {
         if (is_object($stmt) && $stmt instanceof \PDOStatement) {
             $tstart = microtime(true);
             if ($stmt->execute()) {
-                $this->logSuccessfulQuery($stmt->queryString, microtime(true) - $tstart);
+                $this->logSuccessfulQuery($stmt->queryString, null,microtime(true) - $tstart);
                 $value= $stmt->fetchColumn((int)$column);
                 $stmt->closeCursor();
             } else {
-                $this->logFailedQuery($stmt->queryString, microtime(true) - $tstart, $stmt->errorCode(), $stmt->errorInfo());
+                $this->logFailedQuery($stmt->queryString, null,microtime(true) - $tstart, $stmt->errorCode(), $stmt->errorInfo());
                 $this->log(xPDO::LOG_LEVEL_ERROR, "Error " . $stmt->errorCode() . " executing statement: \n" . print_r($stmt->errorInfo(), true), '', __METHOD__, __FILE__, __LINE__);
             }
         } else {
@@ -2495,10 +2495,10 @@ class xPDO {
         $return= $this->pdo->exec($query);
 
         if ($return === false) {
-            $this->logFailedQuery($query, microtime(true) - $tstart, $this->pdo->errorCode(), $this->pdo->errorInfo());
+            $this->logFailedQuery($query, null,microtime(true) - $tstart, $this->pdo->errorCode(), $this->pdo->errorInfo());
             $this->log(xPDO::LOG_LEVEL_ERROR, "Error " . $this->pdo->errorCode() . " executing statement: \n" . print_r($this->pdo->errorInfo(), true), '', __METHOD__, __FILE__, __LINE__);
         } else {
-            $this->logSuccessfulQuery($query, microtime(true) - $tstart);
+            $this->logSuccessfulQuery($query, null,microtime(true) - $tstart);
         }
 
         return $return;
@@ -2565,10 +2565,10 @@ class xPDO {
         $return= $this->pdo->query($query);
 
         if ($return === false) {
-            $this->logFailedQuery($query, microtime(true) - $tstart, $this->pdo->errorCode(), $this->pdo->errorInfo());
+            $this->logFailedQuery($query, null,microtime(true) - $tstart, $this->pdo->errorCode(), $this->pdo->errorInfo());
             $this->log(xPDO::LOG_LEVEL_ERROR, "Error " . $this->pdo->errorCode() . " executing statement: \n" . print_r($this->pdo->errorInfo(), true), '', __METHOD__, __FILE__, __LINE__);
         } else {
-            $this->logSuccessfulQuery($query, microtime(true) - $tstart);
+            $this->logSuccessfulQuery($query, null,microtime(true) - $tstart);
         }
 
         return $return;
@@ -2793,7 +2793,7 @@ class xPDO {
         }
     }
 
-    public function logSuccessfulQuery($sql, $time)
+    public function logSuccessfulQuery($sql, $params, $time)
     {
         $this->executedQueries++;
         $this->queryTime += $time;
@@ -2801,12 +2801,13 @@ class xPDO {
         if ($this->getProfiler()) {
             $this->successfulQueries[] = array(
                 'sql' => $sql,
+                'params' => $this->extractBindings($params),
                 'time' => $time
             );
         }
     }
 
-    public function logFailedQuery($sql, $time, $errorCode, $errorInfo)
+    public function logFailedQuery($sql, $params, $time, $errorCode, $errorInfo)
     {
         $this->executedQueries++;
         $this->queryTime += $time;
@@ -2814,11 +2815,27 @@ class xPDO {
         if ($this->getProfiler()) {
             $this->failedQueries[] = array(
                 'sql' => $sql,
+                'params' => $this->extractBindings($params),
                 'time' => $time,
                 'errorCode' => $errorCode,
                 'errorInfo' => print_r($errorInfo, true)
             );
         }
+    }
+
+    private function extractBindings($params)
+    {
+        $return = [];
+
+        if (!$params) {
+            $params = array();
+        }
+
+        foreach($params as $key => $value) {
+            $return[] = is_array($value) ? $value['value'] : $value;
+        }
+
+        return $return;
     }
 
     /**

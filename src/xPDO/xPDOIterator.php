@@ -87,10 +87,10 @@ class xPDOIterator implements Iterator
         $this->stmt = $this->criteria->prepare();
         $tstart = microtime(true);
         if ($this->stmt && $this->stmt->execute()) {
-            $this->xpdo->logSuccessfulQuery($this->stmt->queryString, microtime(true) - $tstart);
+            $this->xpdo->logSuccessfulQuery($this->stmt->queryString, $this->criteria->bindings, microtime(true) - $tstart);
             $this->fetch();
         } elseif ($this->stmt) {
-            $this->xpdo->logFailedQuery($this->stmt->queryString, microtime(true) - $tstart, $this->stmt->errorCode(), $this->stmt->errorInfo());
+            $this->xpdo->logFailedQuery($this->stmt->queryString, $this->criteria->bindings, microtime(true) - $tstart, $this->stmt->errorCode(), $this->stmt->errorInfo());
             $this->xpdo->log(xPDO::LOG_LEVEL_ERROR, "Error " . $this->stmt->errorCode() . " executing statement: \n" . print_r($this->stmt->errorInfo(), true), '', __METHOD__, __FILE__, __LINE__);
         }
     }

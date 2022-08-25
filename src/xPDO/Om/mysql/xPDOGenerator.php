@@ -96,9 +96,9 @@ class xPDOGenerator extends \xPDO\Om\xPDOGenerator {
         $return = $tablesStmt->execute();
 
         if ($return) {
-            $this->manager->xpdo->logSuccessfulQuery($tablesStmt->queryString, microtime(true) - $tstart);
+            $this->manager->xpdo->logSuccessfulQuery($tablesStmt->queryString, null, microtime(true) - $tstart);
         } else {
-            $this->manager->xpdo->logFailedQuery($tablesStmt->queryString, microtime(true) - $tstart, $tablesStmt->errorCode(), $tablesStmt->errorInfo());
+            $this->manager->xpdo->logFailedQuery($tablesStmt->queryString, null, microtime(true) - $tstart, $tablesStmt->errorCode(), $tablesStmt->errorInfo());
         }
 
         $tables= $tablesStmt->fetchAll(PDO::FETCH_NUM);
