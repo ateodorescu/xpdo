@@ -172,6 +172,10 @@ class xPDO {
      */
     public $failedQueries = array();
     /**
+     * @var bool Indicates if the profiler is enabled on this instance
+     */
+    protected $profiler = false;
+    /**
      * @var int The amount of request handling time spent with DB queries.
      */
     public $queryTime= 0;
@@ -1106,15 +1110,11 @@ class xPDO {
         if (is_object($stmt) && $stmt instanceof \PDOStatement) {
             $tstart = microtime(true);
             if ($stmt->execute()) {
-                $this->queryTime += microtime(true) - $tstart;
-                $this->executedQueries++;
-                $this->successfulQueries[] = $stmt->queryString;
+                $this->logSuccessfulQuery($stmt->queryString, microtime(true) - $tstart);
                 $value= $stmt->fetchColumn((int)$column);
                 $stmt->closeCursor();
             } else {
-                $this->queryTime += microtime(true) - $tstart;
-                $this->executedQueries++;
-                $this->failedQueries[] = $stmt->queryString;
+                $this->logFailedQuery($stmt->queryString, microtime(true) - $tstart, $stmt->errorCode(), $stmt->errorInfo());
                 $this->log(xPDO::LOG_LEVEL_ERROR, "Error " . $stmt->errorCode() . " executing statement: \n" . print_r($stmt->errorInfo(), true), '', __METHOD__, __FILE__, __LINE__);
             }
         } else {
@@ -2493,13 +2493,14 @@ class xPDO {
         }
         $tstart= microtime(true);
         $return= $this->pdo->exec($query);
-        $this->queryTime += microtime(true) - $tstart;
-        $this->executedQueries++;
-        if ($return) {
-            $this->successfulQueries[] = $query;
+
+        if ($return === false) {
+            $this->logFailedQuery($query, microtime(true) - $tstart, $this->pdo->errorCode(), $this->pdo->errorInfo());
+            $this->log(xPDO::LOG_LEVEL_ERROR, "Error " . $this->pdo->errorCode() . " executing statement: \n" . print_r($this->pdo->errorInfo(), true), '', __METHOD__, __FILE__, __LINE__);
         } else {
-            $this->failedQueries[] = $query;
+            $this->logSuccessfulQuery($query, microtime(true) - $tstart);
         }
+
         return $return;
     }
 
@@ -2562,13 +2563,14 @@ class xPDO {
         }
         $tstart= microtime(true);
         $return= $this->pdo->query($query);
-        $this->queryTime += microtime(true) - $tstart;
-        $this->executedQueries++;
-        if ($return) {
-            $this->successfulQueries[] = $query;
+
+        if ($return === false) {
+            $this->logFailedQuery($query, microtime(true) - $tstart, $this->pdo->errorCode(), $this->pdo->errorInfo());
+            $this->log(xPDO::LOG_LEVEL_ERROR, "Error " . $this->pdo->errorCode() . " executing statement: \n" . print_r($this->pdo->errorInfo(), true), '', __METHOD__, __FILE__, __LINE__);
         } else {
-            $this->failedQueries[] = $query;
+            $this->logSuccessfulQuery($query, microtime(true) - $tstart);
         }
+
         return $return;
     }
 
@@ -2789,5 +2791,51 @@ class xPDO {
                 $criteria = null;
             }
         }
+    }
+
+    public function logSuccessfulQuery($sql, $time)
+    {
+        $this->executedQueries++;
+        $this->queryTime += $time;
+
+        if ($this->getProfiler()) {
+            $this->successfulQueries[] = array(
+                'sql' => $sql,
+                'time' => $time
+            );
+        }
+    }
+
+    public function logFailedQuery($sql, $time, $errorCode, $errorInfo)
+    {
+        $this->executedQueries++;
+        $this->queryTime += $time;
+
+        if ($this->getProfiler()) {
+            $this->failedQueries[] = array(
+                'sql' => $sql,
+                'time' => $time,
+                'errorCode' => $errorCode,
+                'errorInfo' => print_r($errorInfo, true)
+            );
+        }
+    }
+
+    /**
+     * @return bool
+     */
+    public function getProfiler(): bool
+    {
+        return $this->profiler;
+    }
+
+    /**
+     * Sets the profiler state for the xPDO instance.
+     *
+     * @param bool $profiler
+     */
+    public function setProfiler(bool $profiler): void
+    {
+        $this->profiler = $profiler;
     }
 }
