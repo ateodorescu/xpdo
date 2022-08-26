@@ -2818,7 +2818,7 @@ class xPDO {
                 'params' => $this->extractBindings($params),
                 'time' => $time,
                 'errorCode' => $errorCode,
-                'errorInfo' => print_r($errorInfo, true)
+                'errorInfo' => $errorInfo
             );
         }
     }
