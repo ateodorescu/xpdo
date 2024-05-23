@@ -39,6 +39,10 @@ class xPDOMap implements ArrayAccess
         return isset($this->map[$offset]);
     }
 
+    /**
+     * @param $offset
+     * @return mixed
+     */
     #[\ReturnTypeWillChange]
     public function offsetGet($offset)
     {

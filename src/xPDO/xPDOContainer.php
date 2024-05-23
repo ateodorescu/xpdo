@@ -79,6 +79,10 @@ class xPDOContainer implements ContainerInterface, ArrayAccess
         return array_key_exists($offset, $this->entries);
     }
 
+    /**
+     * @param $offset
+     * @return mixed
+     */
     #[\ReturnTypeWillChange]
     public function offsetGet($offset)
     {
